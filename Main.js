@@ -1,341 +1,127 @@
-import Board        from "./board/Board.js";
-import Canvas       from "./board/Canvas.js";
+import Board        from "./Board.js";
+
+// Utils
+import Utils        from "../../utils/Utils.js";
 
 
 
 /**
- * Pacman Blob
+ * Snake Food
  */
-export default class Blob {
+export default class Food {
 
     /**
-     * Pacman Blob constructor
-     * @param {Board} board
+     * Snake Food constructor
+     * @param {Board}                        board
+     * @param {{top: Number, left: Number}=} pos
+     * @param {Number=}                      top
+     * @param {Number=}                      left
      */
-    constructor(board) {
-        this.board = board;
-        this.level = board.level;
-        this.init(board.gameCanvas);
-    }
+    constructor(board, pos, top, left) {
+        this.board    = board;
+        this.top      = top  || 0;
+        this.left     = left || 0;
+        this.foodTime = 1000;
+        this.time     = this.foodTime;
 
-    /**
-     * Initializes the Blob
-     * @param {Canvas} canvas
-     * @returns {Void}
-     */
-    init(canvas) {
-        this.canvas     = canvas;
-        this.ctx        = canvas.ctx;
+        /** @type {HTMLElement} */
+        this.element  = document.querySelector(".food");
 
-        this.tile       = this.board.startingPos;
-        this.tileCenter = this.board.getTileXYCenter(this.tile);
-        this.x          = this.tileCenter.x;
-        this.y          = this.tileCenter.y;
-        this.dir        = this.board.startingDir;
-        this.speed      = this.level.getNumber("pmSpeed");
-        this.center     = true;
-        this.turn       = null;
-        this.delta      = null;
-        this.mouth      = 5;
-        this.radius     = this.board.blobRadius;
-        this.sound      = 1;
-    }
+        /** @type {HTMLElement} */
+        this.body     = this.element.querySelector(".foodBody");
 
+        /** @type {HTMLElement} */
+        this.shadow   = this.element.querySelector(".foodShadow");
 
-
-    /**
-     * Animates the Blob
-     * @param {Number} speed
-     * @returns {Boolean}
-     */
-    animate(speed) {
-        let newTile = false;
-        if (this.center && this.crashed()) {
-            this.mouth = 5;
-        } else if (this.delta) {
-            newTile = this.cornering(speed);
+        if (top) {
+            this.setPosition();
         } else {
-            newTile = this.move(speed);
-        }
-        this.draw();
-        return newTile;
-    }
-
-    /**
-     * Moves the Blob
-     * @param {Number} speed
-     * @returns {Boolean}
-     */
-    move(speed) {
-        this.x += this.dir.x * this.speed * speed;
-        this.y += this.dir.y * this.speed * speed;
-
-        this.moveMouth();
-        this.newTile();
-        const newTile = this.atCenter();
-
-        this.x = this.board.tunnelEnds(this.x);
-        return newTile;
-    }
-
-    /**
-     * Changes the state of the Blob's mouth
-     * @returns {Void}
-     */
-    moveMouth() {
-        this.mouth = (this.mouth + 1) % 20;
-    }
-
-    /**
-     * The Blob might have entered a new Tile, and several things might need to be done
-     * @returns {Void}
-     */
-    newTile() {
-        const tile = this.board.getTilePos(this.x, this.y);
-        if (!this.board.equalTiles(this.tile, tile)) {
-            this.tile       = tile;
-            this.tileCenter = this.board.getTileXYCenter(tile);
-            this.center     = false;
-
-            if (this.turn && this.inBoard(this.turn) && !this.isWall(this.turn)) {
-                this.delta = {
-                    x : this.dir.x || this.turn.x,
-                    y : this.dir.y || this.turn.y,
-                };
-            }
+            this.add(pos);
         }
     }
 
-    /**
-     * Does the turning or wall crash when the Blob is at, or just passed, the center of a tile
-     * @returns {Boolean}
-     */
-    atCenter() {
-        if (!this.center && this.passedCenter()) {
-            let turn = false;
-            if (this.turn && this.inBoard(this.turn) && !this.isWall(this.turn)) {
-                this.dir  = this.turn;
-                this.turn = null;
-                turn      = true;
-            }
-            if (turn || this.crashed()) {
-                this.x = this.tileCenter.x;
-                this.y = this.tileCenter.y;
-            }
-            this.center = true;
-
-            return true;
-        }
-        return false;
-    }
-
 
 
     /**
-     * Does a faster turn by turnning a bit before the corner.
-     * Only when a turn is asked before reaching an intersection
-     * @param {Number} speed
-     * @returns {Boolean}
+     * Checks if the given position is the food position and it hides it when it is
+     * @param {Number} top
+     * @param {Number} left
+     * @returns {Boolean} True when top and left are equal to the food position
      */
-    cornering(speed) {
-        this.x += this.delta.x * this.speed * speed;
-        this.y += this.delta.y * this.speed * speed;
-
-        if (this.passedCenter()) {
-            if (this.dir.x) {
-                this.x = this.tileCenter.x;
-            }
-            if (this.dir.y) {
-                this.y = this.tileCenter.y;
-            }
-            this.dir   = this.turn;
-            this.turn  = null;
-            this.delta = null;
-
+    eat(top, left) {
+        if (top === this.top && left === this.left) {
             return true;
         }
         return false;
     }
 
     /**
-     * Eats food (dots, energizers, fruits)
-     * @param {Boolean} atPill
-     * @param {Boolean} frightenGhosts
+     * Repositions the food and resets the values
+     * @param {{top: Number, left: Number}} pos
      * @returns {Void}
      */
-    onEat(atPill, frightenGhosts) {
-        if (!atPill) {
-            this.sound = 1;
+    add(pos) {
+        this.time = this.foodTime;
+        this.top  = pos.top;
+        this.left = pos.left;
+
+        this.setPosition();
+    }
+
+    /**
+     * Reduces the time
+     * @param {Number} time
+     * @returns {Void}
+     */
+    reduceTime(time) {
+        if (this.time > 0) {
+            this.time = Math.max(0, this.time - Math.round(time / 4));
+            this.setTransform();
         }
-        let key;
-        if (frightenGhosts) {
-            key = atPill ? "eatingFrightSpeed" : "pmFrightSpeed";
+    }
+
+    /**
+     * Places the food at a position
+     * @returns {Void}
+     */
+    setPosition() {
+        this.element.style.top  = this.board.getPosition(this.top);
+        this.element.style.left = this.board.getPosition(this.left);
+    }
+
+    /**
+     * Sets the transform to rotate the food
+     * @returns {Void}
+     */
+    setTransform() {
+        const time = (1000 - this.time) / 10;
+        let   deg  = 0;
+        if (time < 21) {
+            deg = time * 360 / 20;
+        } else if (time < 51) {
+            deg = time * 720 / 50;
         } else {
-            key = atPill ? "eatingSpeed" : "pmSpeed";
+            deg = time * 1080 / 99;
         }
-        this.speed = this.level.getNumber(key);
+        this.body.style.transform   = Utils.rotate(deg);
+        this.shadow.style.transform = Utils.rotate(deg);
     }
 
+
+
     /**
-     * Returns the apropiate sound effect
-     * @returns {String}
+     * Returns the position of the food
+     * @returns {{top: Number, left: Number}}
      */
-    getSound() {
-        this.sound = (this.sound + 1) % 2;
-        return this.sound ? "eat2" : "eat1";
+    get pos() {
+        return { top : this.top, left : this.left };
     }
 
     /**
-     * New direction (given by the user)
-     * @param {{x: Number, y: Number}} turn
-     * @returns {Void}
-     */
-    makeTurn(turn) {
-        if (this.delta) {
-            return;
-        }
-        if (this.turnNow(turn)) {
-            this.dir    = turn;
-            this.turn   = null;
-            this.center = false;
-        } else {
-            this.turn = turn;
-        }
-    }
-
-
-
-    /**
-     * Draws a Blob with the given data
-     * @returns {Void}
-     */
-    draw() {
-        const values = [ 0, 0.2, 0.4, 0.2 ];
-        const mouth  = Math.floor(this.mouth / 5);
-        const delta  = values[mouth];
-
-        this.savePos();
-        this.ctx.save();
-        this.ctx.fillStyle = "rgb(255, 255, 51)";
-        this.ctx.translate(Math.round(this.x), Math.round(this.y));
-        this.ctx.rotate(this.getAngle());
-        this.ctx.beginPath();
-        this.ctx.arc(0, 0, this.radius, (1 + delta) * Math.PI, (3 - delta) * Math.PI);
-        this.ctx.lineTo(Math.round(this.radius / 3), 0);
-        this.ctx.fill();
-        this.ctx.restore();
-    }
-
-    /**
-     * Saves the Blob's position to delete clear it before the next animation
-     * @returns {Void}
-     */
-    savePos() {
-        this.canvas.savePos(this.x, this.y);
-    }
-
-    /**
-     * Draws the next step in the Blob's death animation
-     * @param {CanvasRenderingContext2D} ctx
-     * @param {Number}                   count
-     * @returns {Void}
-     */
-    drawDeath(ctx, count) {
-        const delta = count / 50;
-
-        ctx.fillStyle = "rgb(255, 255, 51)";
-        ctx.beginPath();
-        ctx.arc(0, 0, this.radius, (1.5 - delta) * Math.PI, (1.5 + delta) * Math.PI, true);
-        ctx.lineTo(0, 0);
-        ctx.fill();
-    }
-
-    /**
-     * Draws a circle as the next step in the Blob Death animation
-     * @param {CanvasRenderingContext2D} ctx
-     * @param {Number}                   count
-     * @returns {Void}
-     */
-    drawCircle(ctx, count) {
-        const radius = Math.round(count / 2);
-
-        ctx.strokeStyle = "rgb(159, 159, 31)";
-        ctx.lineWidth   = 3;
-        ctx.beginPath();
-        ctx.arc(0, 0, radius, 0, 2 * Math.PI, true);
-        ctx.stroke();
-    }
-
-
-
-    /**
-     * Returns true if the Blob crashed with a wall
-     * @returns {Boolean}
-     */
-    crashed() {
-        return this.inBoard(this.dir) && this.isWall(this.dir);
-    }
-
-    /**
-     * Returns true if the Blob has passed the center of the currrent tile
-     * @returns {Boolean}
-     */
-    passedCenter() {
-        return (
-            (this.dir.x ===  1 && this.x >= this.tileCenter.x) ||
-            (this.dir.x === -1 && this.x <= this.tileCenter.x) ||
-            (this.dir.y ===  1 && this.y >= this.tileCenter.y) ||
-            (this.dir.y === -1 && this.y <= this.tileCenter.y)
-        );
-    }
-
-    /**
-     * Returns true if the Blob has to turn now
-     * @param {{x: Number, y: Number}} turn
-     * @returns {Boolean}
-     */
-    turnNow(turn) {
-        return (
-            (!this.dir.x && !turn.x) || (!this.dir.y && !turn.y) ||  // Half Turn
-            (this.center && this.crashed() && this.inBoard(turn) && !this.isWall(turn))    // Crash Turn
-        );
-    }
-
-    /**
-     * Returns true if the next tile is a wall
-     * @param {{x: Number, y: Number}} turn
-     * @returns {Boolean}
-     */
-    isWall(turn) {
-        const tile = this.board.sumTiles(this.tile, turn);
-        return this.board.isWall(tile.x, tile.y);
-    }
-
-    /**
-     * Returns true if the next tile is a wall
-     * @param {{x: Number, y: Number}} turn
-     * @returns {Boolean}
-     */
-    inBoard(turn) {
-        const tile = this.board.sumTiles(this.tile, turn);
-        return this.board.inBoard(tile.x, tile.y);
-    }
-
-    /**
-     * Returns the angle of the Blob using its direction
+     * Returns the timer
      * @returns {Number}
      */
-    getAngle() {
-        let angle;
-        if (this.dir.x === -1) {
-            angle = 0;
-        } else if (this.dir.x ===  1) {
-            angle = Math.PI;
-        } else if (this.dir.y === -1) {
-            angle = 0.5 * Math.PI;
-        } else if (this.dir.y ===  1) {
-            angle = 1.5 * Math.PI;
-        }
-        return angle;
+    get timer() {
+        return this.time > 0 ? Math.round(this.time / 10) : 0;
     }
 }

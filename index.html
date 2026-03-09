@@ -2,16 +2,16 @@
  * Game Fonts
  */
 @font-face {
-    font-family: "Agency FB";
-    font-style: normal;
-    font-weight: bold;
-    src: local("Agency FB Negrita"), url("../fonts/agencyb.ttf") format("truetype");
-}
-@font-face {
-    font-family: "Agency FB";
+    font-family: "Equilibrium";
     font-style: normal;
     font-weight: normal;
-    src: local("Agency FB"), url("../fonts/agencyr.ttf") format("truetype");
+    src: local("Equilibrium"), url("../fonts/equilibrium.ttf") format("TrueType");
+}
+@font-face {
+    font-family: "Bauhaus 93";
+    font-style: normal;
+    font-weight: normal;
+    src: local("Bauhaus 93"), url("../fonts/bauhs93.ttf") format("truetype");
 }
 
 
@@ -30,34 +30,56 @@ html, body {
     font-size: 15px;
 }
 html, body, input {
-    color: #677799;
-    font-family: "Agency FB";
-    font-weight: bold;
+    color: black;
+    font-family: "Bauhaus 93";
 }
 
 a {
-    position: relative;
-    color: #677799;
+    color: #333333;
+    text-shadow: #666666 0.05em 0.05em 0.05em;
     text-decoration: none;
     outline: none;
 }
 a:hover {
     color: black;
+    text-shadow: #333333 0.05em 0.05em 0.05em;
 }
-    a:before {
-        content: "";
-        position: absolute;
-        top: 0.64em;
-        left: -0.64em;
-        display: inline-block;
-        width: 0.4em;
-        height: 0.4em;
-        border-radius: 0.08em;
-        background-color: #677799;
-    }
-    a:hover:before {
-        background-color: black;
-    }
+
+
+
+/**
+ * Modes Display
+ */
+.starting .messages,
+.playing  .messages {
+    display: none;
+}
+
+.mainScreen .main,
+.paused     .pause,
+.continuing .pause,
+.gameOver   .input,
+.highScores .high,
+.help       .controls {
+    display: block;
+}
+
+.starting .game,
+.playing  .game,
+.paused   .game,
+.gameOver .game {
+    display: block;
+}
+
+.starting .food {
+    display: none;
+}
+
+.paused     .game,
+.continuing .game,
+.gameOver   .game {
+    opacity: 0.5;
+}
 
 
 
@@ -67,56 +89,68 @@ a:hover {
 #container {
     position: absolute;
     top: 50%;
-    bottom: 50%;
     left: 50%;
     right: 50%;
-    width: 31.6em;
-    height: 41.6em;
-    margin-top: -20.8em;
-    margin-left: -15.8em;
+    bottom: 50%;
+    margin-left: -18.5em;
+    margin-top: -15em;
+    width: 37em;
+    height: 30em;
+    background-color: #AACC99;
+    background-image: linear-gradient(110deg, #AACC99 25%, #b7d3a8 25%, #b7d3a8 50%, #AACC99 50%, #AACC99);
+    border-radius: 1em;
+    box-shadow: 0 0 0 1em #272727, 0 0 0 1.2em #121212;
 }
-.leftSide {
+
+.board {
     position: absolute;
-    top: 0.2em;
-    left: 0.2em;
-    right: 10.2em;
-    bottom: 0.2em;
-    border: 0.6em solid #677799;
-    box-shadow: 0 0 0 0.2em #121212;
-    background: linear-gradient(135deg, #BBCCE3 25%, #A2B8D5 25%, #A2B8D5 50%, #BBCCE3 50%, #BBCCE3 75%, #A2B8D5 75%);
-    background-size: 4px 4px;
+    top: 1.8em;
+    left: 1.8em;
+    bottom: 3.8em;
+    right: 1.8em;
+    border: 0.1em solid #333333;
+    box-shadow: inset -0.2em 0.2em 0 #7C9774, -0.2em 0.2em 0 #7C9774;
 }
-.rightSide {
+
+
+.game {
+    position: absolute;
+    display: none;
+    top: 1.8em;
+    left: 1.8em;
+    bottom: 0;
+    right: 1.8em;
+}
+.start {
+    position: absolute;
+    top: 0.5em;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 10em;
+    text-shadow: 0.01em 0.01em 0.01em black, -0.01em -0.01em 0.01em black, 0.04em 0.04em 0.01em #333333;
+}
+
+.snake {
     position: absolute;
     top: 0;
+    left: 0;
     right: 0;
-    width: 10.2em;
     bottom: 0;
 }
 
-
-
-/**
- * Show / Hide
- */
-.playing .messages { display: none; }
-.playing .pauser,
-.paused  .pauser { display: block; }
-
-.playing    #next,
-.mainScreen #next,
-.playing    .board,
-.mainScreen .board {
-    display: block;
+.score, .time, .level {
+    position: absolute;
+    bottom: 0.25em;
+    left: 0.25em;
+    right: 0.25em;
+    height: 1.5em;
+    font-size: 2em;
+    text-shadow: #333333 0.05em 0.05em 0.05em;
 }
-
-.mainScreen .levels,
-.paused     .pause,
-.gameOver   .input,
-.highScores .high,
-.help       .controls {
-    display: block;
-}
+    .score { text-align: left;   }
+    .time  { text-align: center; }
+    .level { text-align: right;  }
 
 
 
@@ -125,104 +159,85 @@ a:hover {
  */
 .messages {
     position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
+    top: -1.2em;
+    left: -1.2em;
+    bottom: -1.2em;
+    right: -1.2em;
+    z-index: 5;
 }
-    .messages .text {
-        position: absolute;
-        top: 4em;
-        left: 0;
-        right: 0;
-        height: 8em;
-        background-color: black;
-        opacity: 0.8;
-    }
+.messages .text {
+    position: absolute;
+    top: 5em;
+    left: 0;
+    right: 0;
+    height: 8em;
+    background-color: black;
+    opacity: 0.8;
+}
     .messages .text h2 {
         position: absolute;
-        top: 0.2em;
+        top: 0.1em;
         left: 0;
         right: 0;
         margin: 0;
-        font-size: 5em;
-        line-height: 1em;
+        font: 6.5em Equilibrium;
         text-align: center;
+        text-transform: lowercase;
         color: white;
     }
     .messages .text p {
         position: absolute;
-        top: 5em;
+        top: 4.8em;
         left: 0;
         right: 0;
+        font-family: Verdana, Arial, Helvetica, sans-serif;
         text-align: center;
         color: white;
-        font-family: Verdana, Arial, Helvetica, sans-serif;
-        line-height: 1.5em;
     }
 
 
 
 /**
- * Main Screen / Pause
+ * Main Screen
  */
-.levels {
-    display: none;
+.main { display: none; }
+.demo {
     position: absolute;
-    top: 8em;
-    left: 1.5em;
-    right: 1.5em;
-    height: 2.7em;
-    background-color: #DAEDFC;
-    border: 0.16em solid #677799;
-    text-align: center;
-    color: #677799;
-    font-size: 2.5em;
+    top: 14.5em;
+    left: 4em;
+    height: 7.5em;
+    width: 4.5em;
 }
-    .levels .left,
-    .levels .right {
-        position: absolute;
-        bottom: 1em;
-        width: 0;
-        border-color: transparent;
-        border-style: solid;
-        border-width: 1em;
-        cursor: pointer;
-        font-size: 0.4em;
-    }
-    .levels .left {
-        left: 0.5em;
-        border-right-color: #677799;
-    }
-    .levels .right {
-        right: 0.5em;
-        border-left-color: #677799;
-    }
-    .levels .left:hover  { border-right-color: black; }
-    .levels .right:hover { border-left-color:  black; }
+    .demo1 { left: 4.6em; }
+    .demo2 { left: 13em; }
+    .demo3 { left: 21.7em; }
+    .demo4 { left: 30.4em; }
 
-
-.levels ul, .pause {
+.main ul {
     position: absolute;
-    left: 0;
-    right: 0;
+    top: 11.25em;
+    left: 1em;
+    right: 1em;
     margin: 0;
     padding: 0;
+    font-size: 2em;
     text-align: center;
-    line-height: 1.2em;
+    list-style: none;
 }
-    .levels ul { top: 3em;  }
-    .pause {
-        font-size: 2.5em;
-        display: none;
-        top: 8em;
+    .main li {
+        display: inline-block;
+        width: 4em;
     }
+    .main li:nth-last-child(-n+3) {
+        position: absolute;
+        top: 2.7em;
+        width: auto;
+    }
+    .main li:nth-last-child(3)    { left: 0.5em;  }
+    .main li:nth-last-child(-n+2) { right: 0.5em; }
 
-    .levels li,
-    .pause  li {
-        list-style-type: none;
-        padding: 0.08em;
-    }
+.main.help li:nth-last-child(1),
+.main.continue li:nth-last-child(2) { display: none; }
 
 
 
@@ -232,180 +247,130 @@ a:hover {
 .input {
     display: none;
     position: absolute;
-    top: 6em;
-    right: 0;
-    left: 0;
+    top: 7.5em;
+    left: 1em;
+    right: 1em;
+    font-size: 2em;
     text-align: center;
-    font-size: 2.5em;
 }
-    .input p {
-        margin: 0;
-        padding-left: 1.5em;
-        text-align: left;
-    }
     .input input {
-        margin: 0.2em 1em 0 0;
-        padding-left: 0.2em;
-        width: 4.5em;
-        background-color: #DAEDFC;
-        border: 0.16em solid #677799;
+        position: absolute;
+        top: 0;
+        left: 4.5em;
+        width: 6em;
+        padding: 0.2em 0 0 0.2em;
+        background: none;
+        border: 0.1em solid #333333;
+        border-radius: 0.25em;
+        box-shadow: inset -0.1em 0.1em 0 #7C9774, -0.1em 0.1em 0 #7C9774;
         font-size: 1em;
+        z-index: 2;
     }
     .input input:focus { outline: none; }
+    .input input::-webkit-input-placeholder {
+        color: #999;
+        text-shadow: #CCC 0.1em 0.1em 0.1em;
+    }
+    .input input:-moz-placeholder {
+        color: #999;
+        text-shadow: #CCC 0.1em 0.1em 0.1em;
+    }
 
-.restart {
-    position: absolute;
-    top: 4em;
-    left: 2.5em;
-}
+    .submit {
+        position: absolute;
+        top: 0.45em;
+        left: 11.25em;
+    }
+    .restart {
+        position: absolute;
+        top: 3em;
+        left: 1em;
+        right: 1em;
+        text-align: center;
+    }
 
 
 
 /**
  * High Scores
  */
-.high { display: none; }
+.high {
+    display: none;
+    font-size: 2em;
+    text-shadow: #333333 0.05em 0.05em 0.05em;
+}
+.high ul {
+    position: absolute;
+    bottom: 0.8em;
+    left: 1.4em;
+    right: 0;
+    height: 1.5em;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+}
+    .high li {
+        display: inline-block;
+        padding-right: 0.8em;
+    }
+
 .scores {
     position: absolute;
-    top: 7.3em;
-    bottom: 0;
+    top: 6.5em;
+    left: 3em;
+    right: 3em;
+    bottom: 2.5em;
+}
+.high .highScore {
+    float: left;
+    clear: both;
+    width: 100%;
+}
+    .hsName  { float: left;  }
+    .hsScore { float: right; }
+
+.none {
+    position: absolute;
+    display: none;
+    top: 7.5em;
     left: 0;
     right: 0;
+    bottom: 0;
     text-align: center;
+}
+
+
+
+/**
+ * Pause / Help
+ */
+.pause {
+    display: none;
+    position: absolute;
+    top: 9em;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    list-style: none;
+    font-size: 2em;
+}
+    .pause li {
+        display: inline;
+        padding: 0 0.5em;
+    }
+
+
+.controls { display: none; }
+.controls ol {
+    margin: 7.5em 1.9em 0 1.7em;
     font-size: 1.7em;
 }
-    .scores .titles,
-    .scores .scores,
-    .help   .titles,
-    .help   .scores {
-        float: left;
-        clear: both;
-    }
-    .scores .titles { color: black; }
-
-    .scores .left,
-    .scores .right,
-    .help   .left,
-    .help   .right {
-        float: left;
-        width: 5.2em;
-    }
-    .scores .left,   .help .left   { text-align: right; }
-    .scores .right,  .help .right  { text-align:  left; }
-    .scores .middle, .help .middle {
-        float: left;
-        width: 1.3em;
-        text-align: center;
-    }
-
-    .none {
-        display: none;
-        position: absolute;
-        top: 8em;
-        left: 0;
-        right: 0;
-        text-align: center;
-        color: black;
-        font-size: 2.5em;
-    }
-    .high .restore {
-        position: absolute;
-        left: 1em;
-        bottom: 0.2em;
-        font-size: 2.5em;
-    }
-    .high .back {
-        position: absolute;
-        right: 0.5em;
-        bottom: 0.2em;
-        font-size: 2.5em;
-    }
-
-
-
-/**
- * Help
- */
-.controls {
-    display: none;
-    position: absolute;
-    top: 13em;
-    bottom: 0;
-    left: 0;
-    right: 0;
-}
-    .controls div,
-    .controls p {
-        color: black;
-        font-weight: normal;
-        font-size: 1.7em;
-        line-height: 1.1em;
-    }
-    .controls p {
-        float: left;
-        clear: both;
-        margin: 0.5em 1em 0 1em;
-    }
-    .controls .back {
-        position: absolute;
-        right: 1em;
-        bottom: 0.2em;
-        font-size: 2.5em;
-    }
-
-
-
-/**
- * Scores Design
- */
-.next, .level, .score, .lines {
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 2.7em;
-    font-size: 2.5em;
-}
-.next  { top: 0.5em; height: 4em; }
-.level { top: 5em;  }
-.score { top: 8em;  }
-.lines { top: 11em; }
-
-    .content {
-        position: absolute;
-        top: 0.9em;
-        left: 0;
-        right: 0.08em;
-        bottom: 0.08em;
-        padding-right: 0.2em;
-        background-color: #DAEDFC;
-        border: 0.16em solid #677799;
-        border-left: none;
-        text-align: right;
-        box-shadow: 0.08em 0 #121212, 0 -0.08em #121212, 0 0.08em #121212, 0.08em 0.08em #121212, 0.08em -0.08em #121212;
-    }
-    .title {
-        position: absolute;
-        top: 0;
-        left: 0.5em;
-        color: #677799;
-        line-height: 1em;
-    }
-
-#next {
-    display: none;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    font-size: 0.4em;
-}
-.pauser {
-    display: block;
-    position: absolute;
-    top: 14.3em;
-    left: 2.3em;
-    font-size: 2.5em;
+.controls a {
+    padding-left: 15.5em;
+    font-size: 2em;
 }
 
 
@@ -415,8 +380,8 @@ a:hover {
  */
 .audio {
     position: absolute;
-    top: 39em;
-    left: -0.5em;
+    bottom: 1.8em;
+    left: 18em;
     cursor: pointer;
 }
 .audio .triangle {
@@ -424,9 +389,19 @@ a:hover {
     bottom: 0.2em;
     left: 0.2em;
     border: 1em solid transparent;
-    border-right-color: #677799;
+    border-right-color: #333;
 }
-    .audio:hover .triangle { border-right-color: black; }
+    .audio .triangle:after {
+        content: "";
+        position: absolute;
+        top: -0.8em;
+        left: -1.2em;
+        border: 1em solid transparent;
+        border-right-color: #666;
+        z-index: -1;
+    }
+    .audio:hover .triangle       { border-right-color: #000; }
+    .audio:hover .triangle:after { border-right-color: #333; }
 
 .audio .box {
     position: absolute;
@@ -434,10 +409,20 @@ a:hover {
     left: 1.1em;
     height: 0.6em;
     width: 0.5em;
-    background-color: #677799;
+    background-color: #333;
 }
-    .audio:hover .box { background-color: black; }
-
+    .audio .box:after {
+        content: "";
+        position: absolute;
+        top: 0.2em;
+        left: -0.2em;
+        height: 0.6em;
+        width: 0.5em;
+        background-color: #666;
+        z-index: -1;
+    }
+    .audio:hover .box       { background-color: #000; }
+    .audio:hover .box:after { background-color: #333; }
 
 .waves {
     position: absolute;
@@ -447,7 +432,7 @@ a:hover {
     .waves div {
         position: absolute;
         left: 0;
-        background-color: #677799;
+        background-color: #333333;
         border-radius: 0 20em 20em 0;
     }
     .waves div:nth-child(1) {
@@ -462,8 +447,8 @@ a:hover {
     }
     .waves div:nth-child(3) {
         bottom: 0.7em;
-        width:  1.0em;
-        height: 1.0em;
+        width:  1em;
+        height: 1em;
     }
     .waves div:nth-child(4) {
         bottom: 0.9em;
@@ -481,127 +466,121 @@ a:hover {
         bottom: 0;
         right: 0.1em;
         top: 0;
-        background-color: #1F1F1F;
+        background-color: #AACC99;
         border-radius: 0 20em 20em 0;
     }
 
 
 
 /**
- * Board Design
+ * Snake Design
  */
-@keyframes wink {
-    0%    { opacity: 1; }
-    50%   { opacity: 1; }
-    50.1% { opacity: 0; }
-    100%  { opacity: 0; }
-}
-
-
-.board {
-    display: none;
-    position: absolute;
-    top: -0.1em;
-    left: -0.1em;
-    bottom: -0.1em;
-    right: -0.1em;
-    overflow: hidden;
-}
-.winker, .field {
+.link {
     position: absolute;
     top: 0;
     left: 0;
-    bottom: 0;
-    right: 0;
+    width: 1.7em;
+    height: 1.7em;
 }
-    .winker div {
-        display: none;
+    .snakeBody {
         position: absolute;
-        left: -0.2em;
+        top: 0;
+        left: 0.2em;
+        bottom: 0.2em;
         right: 0;
-        height: 1.8em;
-        background-image: linear-gradient(to left, rgba(250, 250, 250, 0.8) 1.8em, black 1.8em);
-        background-size: 2em 2em;
-        border: 0.2em solid black;
+        background-color: black;
+        border-radius: 0.4em;
+        z-index: 2;
     }
-    .winker .wink {
-        display: block;
-        animation: wink 150ms 3 linear;
+    .snakeShadow {
+        position: absolute;
+        top: 0.2em;
+        left: 0;
+        bottom: 0;
+        right: 0.2em;
+        background-color: #7C9774;
+        border-radius: 0.4em;
+        z-index: 1;
     }
-
-#piece, #ghost {
-    position: absolute;
-}
 
 
 
 /**
- * Pieces Design
+ * Food Design
  */
-.field div,
-#piece div,
-#ghost div,
-#next  div {
+@keyframes spin {
+    from { transform: rotate(0deg);    }
+    20%  { transform: rotate(360deg);  }
+    50%  { transform: rotate(720deg);  }
+    to   { transform: rotate(1080deg); }
+}
+
+.spin {
+    animation: spin 5s linear;
+}
+
+.food {
     position: absolute;
-    width: 2.2em;
-    height: 2.2em;
+    top: 0;
+    left: 0;
+    width: 1.7em;
+    height: 1.7em;
 }
-     /* I */
-    .piece0 div, .cell0 {
-        box-shadow: inset 0 0 0 0.2em black, inset 0.4em -0.4em #CC6602, inset -0.4em 0.4em #FF9935;
-        background-color: #FF6301;
+    .foodBody {
+        position: absolute;
+        top: 0;
+        left: 0.2em;
+        width: 1.5em;
+        height: 1.5em;
+        z-index: 2;
+    }
+    .foodShadow {
+        position: absolute;
+        top: 0.2em;
+        left: 0;
+        width: 1.5em;
+        height: 1.5em;
+        z-index: 1;
     }
 
-    /* J */
-    .piece1 div, .cell1 {
-        box-shadow: inset 0 0 0 0.2em black, inset 0.4em -0.4em #9900CD, inset -0.4em 0.4em #CD66FF;
-        background-color: #CC00FF;
+    .foodBody div {
+        position: absolute;
+        background-color: black;
+    }
+    .foodShadow div {
+        position: absolute;
+        background-color: #7C9774;
     }
 
-    /* L */
-    .piece2 div, .cell2 {
-        box-shadow: inset 0 0 0 0.2em black, inset 0.4em -0.4em #0000CC, inset -0.4em 0.4em #6367FE;
-        background-color: #0000FE;
+    .foodBody div:nth-child(1),
+    .foodShadow div:nth-child(1) {
+        top: 0;
+        left: 0.4em;
+        width: 0.7em;
+        height: 0.6em;
+        border-radius: 0.3em 0.3em 0 0;
     }
-
-    /* O */
-    .piece3 div, .cell3 {
-        box-shadow: inset 0 0 0 0.2em black, inset 0.4em -0.4em #CC0001, inset -0.4em 0.4em #FF6666;
-        background-color: #FE0000;
+    .foodBody div:nth-child(2),
+    .foodShadow div:nth-child(2) {
+        top: 0.4em;
+        right: 0;
+        width: 0.6em;
+        height: 0.7em;
+        border-radius: 0 0.3em 0.3em 0;
     }
-
-    /* S */
-    .piece4 div, .cell4 {
-        box-shadow: inset 0 0 0 0.2em black, inset 0.4em -0.4em #3499C7, inset -0.4em 0.4em #99FFFF;
-        background-color: #64CDFA;
+    .foodBody div:nth-child(3),
+    .foodShadow div:nth-child(3) {
+        bottom: 0;
+        left: 0.4em;
+        width: 0.7em;
+        height: 0.6em;
+        border-radius: 0 0 0.3em 0.3em;
     }
-
-    /* T */
-    .piece5 div, .cell5 {
-        box-shadow: inset 0 0 0 0.2em black, inset 0.4em -0.4em #FCCE00, inset -0.4em 0.4em #FEFF99;
-        background-color: #FFFD04;
+    .foodBody div:nth-child(4),
+    .foodShadow div:nth-child(4) {
+        top: 0.4em;
+        left: 0;
+        width: 0.6em;
+        height: 0.7em;
+        border-radius: 0.3em 0 0 0.3em;
     }
-
-    /* Z */
-    .piece6 div, .cell6 {
-        box-shadow: inset 0 0 0 0.2em black, inset 0.4em -0.4em #01CC00, inset -0.4em 0.4em #66FF66;
-        background-color: #00FF00;
-    }
-
-    #ghost div {
-        box-shadow: inset 0 0 0 0.2em black, inset 0.4em -0.4em #464646, inset -0.4em 0.4em #666 !important;
-        background-color: #505050 !important;
-    }
-
-
-.r0, .r1, .r2, .r3 {
-    display: none;
-}
-.rot0 .r0, .rot1 .r1,
-.rot2 .r2, .rot3 .r3 {
-    display: block;
-}
-
-.tetriminos {
-    display: none;
-}
