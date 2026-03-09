@@ -1,86 +1,36 @@
+import Board        from "../board/Board.js";
+import Food         from "../Food.js";
+import DemoData     from "./DemoData.js";
+
+
+
 /**
- * Tetris Display
+ * Pacman Demo Food
+ * @extends {Food}
  */
-export default class Display {
+export default class DemoFood extends Food {
 
     /**
-     * Tetris Display constructor
+     * Pacman Demo Food constructor
+     * @param {Board} board
      */
-    constructor() {
-        this.current   = "mainScreen";
-        this.container = document.querySelector("#container");
-        this.header    = document.querySelector(".messages h2");
-        this.paragraph = document.querySelector(".messages p");
-
-        this.messages  = {
-            mainScreen : [ "Tetris",     "Select the starting level" ],
-            paused     : [ "Pause",      "Continue with the game?"   ],
-            continuing : [ "Continue",   "Continue with the game?"   ],
-            gameOver   : [ "GameOver",   "Write your name"           ],
-            highScores : [ "HighScores", "Select a level"            ],
-            help       : [ "Help",       "Game controlls"            ]
-        };
-    }
-
-
-    /**
-     * Gets the Game Display
-     * @returns {String}
-     */
-    get() {
-        return this.current;
-    }
-
-    /**
-     * Sets the Game Display
-     * @param {String} current
-     * @returns {Display}
-     */
-    set(current) {
-        this.current = current;
-        return this;
-    }
-
-
-    /**
-     * Show the message
-     */
-    show() {
-        this.container.className = this.current;
-        this.header.innerHTML    = this.messages[this.current][0];
-        this.paragraph.innerHTML = this.messages[this.current][1];
-    }
-
-    /**
-     * Hide the message
-     */
-    hide() {
-        this.container.className = "playing";
+    constructor(board) {
+        super(board);
+        this.ctx = board.screenCanvas.ctx;
     }
 
 
 
     /**
-     * Returns true if the current is in the main screen
-     * @returns {Boolean}
+     * The wink animation used for the chase anmiation
+     * @returns {Void}
      */
-    get isMainScreen() {
-        return this.current === "mainScreen";
-    }
+    wink() {
+        const x = this.board.getTileCenter(DemoData.chase.enerX);
+        const y = this.board.getTileCenter(DemoData.chase.enerY);
 
-    /**
-     * Returns true if the current is in playing mode
-     * @returns {Boolean}
-     */
-    get isPlaying() {
-        return this.current === "playing";
-    }
-
-    /**
-     * Returns true if the current is in paused mode
-     * @returns {Boolean}
-     */
-    get isPaused() {
-        return this.current === "paused";
+        this.calcRadius();
+        this.clearEnergizer(x, y);
+        this.drawEnergizer(x, y, this.radius);
     }
 }

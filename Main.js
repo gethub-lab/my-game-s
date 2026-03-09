@@ -1,256 +1,341 @@
-import Utils        from "../../utils/Utils.js";
+import Board        from "./board/Board.js";
+import Canvas       from "./board/Canvas.js";
 
 
 
 /**
- * Tetris Board
+ * Pacman Blob
  */
-export default class Board {
+export default class Blob {
 
     /**
-     * Tetris Board constructor
-     * @param {Number}   tetriminoSize
-     * @param {Function} onWindEnd
+     * Pacman Blob constructor
+     * @param {Board} board
      */
-    constructor(tetriminoSize, onWindEnd) {
-        this.fieldElem = document.querySelector(".field");
-        this.winkElem  = document.querySelector(".winker");
+    constructor(board) {
+        this.board = board;
+        this.level = board.level;
+        this.init(board.gameCanvas);
+    }
 
-        this.tetriminoSize = tetriminoSize;
-        this.onWindEnd     = onWindEnd;
-        this.matrixCols    = 12;
-        this.matrixRows    = 23;
-        this.matrix        = [];
+    /**
+     * Initializes the Blob
+     * @param {Canvas} canvas
+     * @returns {Void}
+     */
+    init(canvas) {
+        this.canvas     = canvas;
+        this.ctx        = canvas.ctx;
 
-        this.rows      = [];
-        this.lines     = [];
-        this.winks     = null;
-
-        for (let i = 0; i < this.matrixRows; i += 1) {
-            this.matrix[i] = [];
-            this.rows[i]   = 0;
-            for (let j = 0; j < this.matrixCols; j += 1) {
-                this.matrix[i][j] = this.isBorder(i, j) ? 1 : 0;
-            }
-        }
+        this.tile       = this.board.startingPos;
+        this.tileCenter = this.board.getTileXYCenter(this.tile);
+        this.x          = this.tileCenter.x;
+        this.y          = this.tileCenter.y;
+        this.dir        = this.board.startingDir;
+        this.speed      = this.level.getNumber("pmSpeed");
+        this.center     = true;
+        this.turn       = null;
+        this.delta      = null;
+        this.mouth      = 5;
+        this.radius     = this.board.blobRadius;
+        this.sound      = 1;
     }
 
 
 
     /**
-     * Checks if there is a crash, given the Tetrimino Matrix and position
-     * @param {Number}     top
-     * @param {Number}     left
-     * @param {Number[][]} matrix
+     * Animates the Blob
+     * @param {Number} speed
      * @returns {Boolean}
      */
-    crashed(top, left, matrix) {
-        for (let i = 0; i < matrix.length; i += 1) {
-            for (let j = 0; j < matrix[i].length; j += 1) {
-                if (matrix[i][j] && this.matrix[top + i][left + j + 1]) {
-                    return true;
-                }
+    animate(speed) {
+        let newTile = false;
+        if (this.center && this.crashed()) {
+            this.mouth = 5;
+        } else if (this.delta) {
+            newTile = this.cornering(speed);
+        } else {
+            newTile = this.move(speed);
+        }
+        this.draw();
+        return newTile;
+    }
+
+    /**
+     * Moves the Blob
+     * @param {Number} speed
+     * @returns {Boolean}
+     */
+    move(speed) {
+        this.x += this.dir.x * this.speed * speed;
+        this.y += this.dir.y * this.speed * speed;
+
+        this.moveMouth();
+        this.newTile();
+        const newTile = this.atCenter();
+
+        this.x = this.board.tunnelEnds(this.x);
+        return newTile;
+    }
+
+    /**
+     * Changes the state of the Blob's mouth
+     * @returns {Void}
+     */
+    moveMouth() {
+        this.mouth = (this.mouth + 1) % 20;
+    }
+
+    /**
+     * The Blob might have entered a new Tile, and several things might need to be done
+     * @returns {Void}
+     */
+    newTile() {
+        const tile = this.board.getTilePos(this.x, this.y);
+        if (!this.board.equalTiles(this.tile, tile)) {
+            this.tile       = tile;
+            this.tileCenter = this.board.getTileXYCenter(tile);
+            this.center     = false;
+
+            if (this.turn && this.inBoard(this.turn) && !this.isWall(this.turn)) {
+                this.delta = {
+                    x : this.dir.x || this.turn.x,
+                    y : this.dir.y || this.turn.y,
+                };
             }
+        }
+    }
+
+    /**
+     * Does the turning or wall crash when the Blob is at, or just passed, the center of a tile
+     * @returns {Boolean}
+     */
+    atCenter() {
+        if (!this.center && this.passedCenter()) {
+            let turn = false;
+            if (this.turn && this.inBoard(this.turn) && !this.isWall(this.turn)) {
+                this.dir  = this.turn;
+                this.turn = null;
+                turn      = true;
+            }
+            if (turn || this.crashed()) {
+                this.x = this.tileCenter.x;
+                this.y = this.tileCenter.y;
+            }
+            this.center = true;
+
+            return true;
+        }
+        return false;
+    }
+
+
+
+    /**
+     * Does a faster turn by turnning a bit before the corner.
+     * Only when a turn is asked before reaching an intersection
+     * @param {Number} speed
+     * @returns {Boolean}
+     */
+    cornering(speed) {
+        this.x += this.delta.x * this.speed * speed;
+        this.y += this.delta.y * this.speed * speed;
+
+        if (this.passedCenter()) {
+            if (this.dir.x) {
+                this.x = this.tileCenter.x;
+            }
+            if (this.dir.y) {
+                this.y = this.tileCenter.y;
+            }
+            this.dir   = this.turn;
+            this.turn  = null;
+            this.delta = null;
+
+            return true;
         }
         return false;
     }
 
     /**
-     * Adds Tetrimino Elements to the Matrix
-     * @param {HTMLElement} element
-     * @param {Number}      top
-     * @param {Number}      left
-     * @returns {Boolean}
-     */
-    addToMatrix(element, top, left) {
-        this.matrix[top][left + 1] = element;
-        this.rows[top] += 1;
-
-        return this.rows[top] === this.matrixCols - 2;
-    }
-
-    /**
-     * Removes a Row from the Matrix
-     * @param {Number} line
+     * Eats food (dots, energizers, fruits)
+     * @param {Boolean} atPill
+     * @param {Boolean} frightenGhosts
      * @returns {Void}
      */
-    removeLine(line) {
-        let i = 1;
-        for (; i < this.matrixCols - 1; i += 1) {
-            if (this.matrix[line][i]) {
-                Utils.removeElement(this.matrix[line][i]);
-            }
+    onEat(atPill, frightenGhosts) {
+        if (!atPill) {
+            this.sound = 1;
         }
-
-        i = line - 1;
-        while (this.rows[i] > 0) {
-            for (let j = 1; j < this.matrixCols - 1; j += 1) {
-                this.matrix[i + 1][j] = this.matrix[i][j];
-                if (this.matrix[i][j]) {
-                    this.matrix[i][j].style.top = this.getTop(i + 1);
-                }
-            }
-            this.rows[i + 1] = this.rows[i];
-            i -= 1;
+        let key;
+        if (frightenGhosts) {
+            key = atPill ? "eatingFrightSpeed" : "pmFrightSpeed";
+        } else {
+            key = atPill ? "eatingSpeed" : "pmSpeed";
         }
-        i += 1;
-        for (let j = 1; j < this.matrixCols - 1; j += 1) {
-            this.matrix[i][j] = 0;
-        }
-        this.rows[i] = 0;
-    }
-
-
-
-    /**
-     * Adds all the elements in the Tetrimino to the board
-     * @param {Number[][]} matrix
-     * @param {Number}     type
-     * @param {Number}     elemTop
-     * @param {Number}     elemLeft
-     * @returns {Number}
-     */
-    addElements(matrix, type, elemTop, elemLeft) {
-        const lines = [];
-        for (let i = 0; i < matrix.length; i += 1) {
-            for (let j = 0; j < matrix[i].length; j += 1) {
-                if (matrix[i][j]) {
-                    const top  = elemTop  + i;
-                    const left = elemLeft + j;
-                    const elem = this.append(type, top, left);
-
-                    if (this.addToMatrix(elem, top, left)) {
-                        lines.push(top);
-                    }
-                }
-            }
-        }
-        if (lines.length > 0) {
-            this.startWink(lines);
-        }
-        return lines.length;
+        this.speed = this.level.getNumber(key);
     }
 
     /**
-     * Creates a new element and adds it to the Board
-     * @param {Number} type
-     * @param {Number} top
-     * @param {Number} left
-     * @returns {HTMLElement}
-     */
-    append(type, top, left) {
-        const element = document.createElement("DIV");
-        element.className  = `cell${type}`;
-        element.style.top  = this.getTop(top);
-        element.style.left = this.getLeft(left);
-
-        this.fieldElem.appendChild(element);
-        return element;
-    }
-
-    /**
-     * Starts the wink animation
-     * @param {Number[]} lines
-     */
-    startWink(lines) {
-        lines.forEach((line) => {
-            if (this.lines[line]) {
-                this.lines[line].classList.add("wink");
-            } else {
-                this.lines[line] = this.createWink(line);
-            }
-        });
-        this.winks = lines;
-    }
-
-    /**
-     * Creates a new wink Element
-     * @param {Number} top
-     * @returns {HTMLElement}
-     */
-    createWink(top) {
-        const element = document.createElement("div");
-        element.className   = "wink";
-        element.style.top   = this.getTop(top);
-        element.dataset.top = String(top);
-
-        this.winkElem.appendChild(element);
-
-        element.addEventListener("animationend", () => {
-            this.endWink();
-        });
-        return element;
-    }
-
-    /**
-     * Ends the Wink animation
-     */
-    endWink() {
-        if (this.winks) {
-            this.winks.forEach((line) => {
-                this.lines[line].classList.remove("wink");
-                this.removeLine(line);
-            });
-
-            this.winks = null;
-            this.onWindEnd();
-        }
-    }
-
-    /**
-     * Returns true if the Board is winking
-     * @returns {Boolean}
-     */
-    isWinking() {
-        return this.winks !== null;
-    }
-
-
-
-    /**
-     * Returns true if the position is a border
-     * @param {Number} top
-     * @param {Number} left
-     * @returns {Boolean}
-     */
-    isBorder(top, left) {
-        return top === this.matrixRows  - 1 || left === 0 || left === this.matrixCols - 1;
-    }
-
-    /**
-     * Returns a column so that the Tetrimino is centered in the board
-     * @param {Number} cols - Number of columns of the Tetrimino
-     * @returns {Number}
-     */
-    getMiddle(cols) {
-        return Math.floor((this.matrixCols - cols - 2) / 2);
-    }
-
-    /**
-     * Returns the top position for styling
-     * @param {Number} top
+     * Returns the apropiate sound effect
      * @returns {String}
      */
-    getTop(top) {
-        return Utils.toEM((top - 2) * this.tetriminoSize);
+    getSound() {
+        this.sound = (this.sound + 1) % 2;
+        return this.sound ? "eat2" : "eat1";
     }
 
     /**
-     * Returns the left position for styling
-     * @param {Number} left
-     * @returns {String}
+     * New direction (given by the user)
+     * @param {{x: Number, y: Number}} turn
+     * @returns {Void}
      */
-    getLeft(left) {
-        return Utils.toEM(left * this.tetriminoSize);
+    makeTurn(turn) {
+        if (this.delta) {
+            return;
+        }
+        if (this.turnNow(turn)) {
+            this.dir    = turn;
+            this.turn   = null;
+            this.center = false;
+        } else {
+            this.turn = turn;
+        }
     }
 
 
 
     /**
-     * Clears the elements
+     * Draws a Blob with the given data
+     * @returns {Void}
      */
-    clearElements() {
-        this.fieldElem.innerHTML = "";
-        this.winkElem.innerHTML  = "";
+    draw() {
+        const values = [ 0, 0.2, 0.4, 0.2 ];
+        const mouth  = Math.floor(this.mouth / 5);
+        const delta  = values[mouth];
+
+        this.savePos();
+        this.ctx.save();
+        this.ctx.fillStyle = "rgb(255, 255, 51)";
+        this.ctx.translate(Math.round(this.x), Math.round(this.y));
+        this.ctx.rotate(this.getAngle());
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, this.radius, (1 + delta) * Math.PI, (3 - delta) * Math.PI);
+        this.ctx.lineTo(Math.round(this.radius / 3), 0);
+        this.ctx.fill();
+        this.ctx.restore();
+    }
+
+    /**
+     * Saves the Blob's position to delete clear it before the next animation
+     * @returns {Void}
+     */
+    savePos() {
+        this.canvas.savePos(this.x, this.y);
+    }
+
+    /**
+     * Draws the next step in the Blob's death animation
+     * @param {CanvasRenderingContext2D} ctx
+     * @param {Number}                   count
+     * @returns {Void}
+     */
+    drawDeath(ctx, count) {
+        const delta = count / 50;
+
+        ctx.fillStyle = "rgb(255, 255, 51)";
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, (1.5 - delta) * Math.PI, (1.5 + delta) * Math.PI, true);
+        ctx.lineTo(0, 0);
+        ctx.fill();
+    }
+
+    /**
+     * Draws a circle as the next step in the Blob Death animation
+     * @param {CanvasRenderingContext2D} ctx
+     * @param {Number}                   count
+     * @returns {Void}
+     */
+    drawCircle(ctx, count) {
+        const radius = Math.round(count / 2);
+
+        ctx.strokeStyle = "rgb(159, 159, 31)";
+        ctx.lineWidth   = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, 2 * Math.PI, true);
+        ctx.stroke();
+    }
+
+
+
+    /**
+     * Returns true if the Blob crashed with a wall
+     * @returns {Boolean}
+     */
+    crashed() {
+        return this.inBoard(this.dir) && this.isWall(this.dir);
+    }
+
+    /**
+     * Returns true if the Blob has passed the center of the currrent tile
+     * @returns {Boolean}
+     */
+    passedCenter() {
+        return (
+            (this.dir.x ===  1 && this.x >= this.tileCenter.x) ||
+            (this.dir.x === -1 && this.x <= this.tileCenter.x) ||
+            (this.dir.y ===  1 && this.y >= this.tileCenter.y) ||
+            (this.dir.y === -1 && this.y <= this.tileCenter.y)
+        );
+    }
+
+    /**
+     * Returns true if the Blob has to turn now
+     * @param {{x: Number, y: Number}} turn
+     * @returns {Boolean}
+     */
+    turnNow(turn) {
+        return (
+            (!this.dir.x && !turn.x) || (!this.dir.y && !turn.y) ||  // Half Turn
+            (this.center && this.crashed() && this.inBoard(turn) && !this.isWall(turn))    // Crash Turn
+        );
+    }
+
+    /**
+     * Returns true if the next tile is a wall
+     * @param {{x: Number, y: Number}} turn
+     * @returns {Boolean}
+     */
+    isWall(turn) {
+        const tile = this.board.sumTiles(this.tile, turn);
+        return this.board.isWall(tile.x, tile.y);
+    }
+
+    /**
+     * Returns true if the next tile is a wall
+     * @param {{x: Number, y: Number}} turn
+     * @returns {Boolean}
+     */
+    inBoard(turn) {
+        const tile = this.board.sumTiles(this.tile, turn);
+        return this.board.inBoard(tile.x, tile.y);
+    }
+
+    /**
+     * Returns the angle of the Blob using its direction
+     * @returns {Number}
+     */
+    getAngle() {
+        let angle;
+        if (this.dir.x === -1) {
+            angle = 0;
+        } else if (this.dir.x ===  1) {
+            angle = Math.PI;
+        } else if (this.dir.y === -1) {
+            angle = 0.5 * Math.PI;
+        } else if (this.dir.y ===  1) {
+            angle = 1.5 * Math.PI;
+        }
+        return angle;
     }
 }
